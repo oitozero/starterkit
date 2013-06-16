@@ -1,0 +1,63 @@
+<div class="row">
+    <div class="span6">
+    	<h1><%= subscribers.length %> <small>subscribers</small></h1>
+        <h1><%= pageviews %> <small>page views</small></h1>
+        <h1><%= subscribers.length > 0 ? (subscribers.length/pageviews*100).toFixed(2) : 0 %>% <small>bounce rate</small></h1>
+        <% if (subscribers.length > 0) { %>
+        <table id="subscribers" class="table table-condensed table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>email</th>
+                    <th>subscribed at</th>
+                    <th>confirmed at</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% subscribers.forEach(function (subscriber) { %>
+                <tr>
+                    <td><%= subscriber.id %></td>
+                    <td><%= subscriber.email %></td>
+                    <td><%= subscriber.subscribed_at %></td>
+                    <td><%= subscriber.confirmed_at %></td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+        <% } else { %>
+        <p>
+            <strong>No subscribers were found.</strong>
+        </p>
+        <% } %>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function(){
+        $('#subscribers > tbody  > tr').each(function() {
+            var $tr = $(this);
+            var subscribed_at = $("td:nth-child(3)", this);
+            var confirmed_at = $("td:nth-child(4)", this);
+
+            console.log(subscribed_at.html() + " :: " + confirmed_at.html());
+
+            $("td:nth-child(3)", this).html(format_date(subscribed_at.html()));
+            $("td:nth-child(4)", this).html(format_date(confirmed_at.html()));
+        });  
+    });
+
+    function format_date(date_str){
+        if(date_str && date_str !== "undefined"){
+            var date = new Date(date_str);
+            var curr_date = date.getDate();
+            var curr_month = date.getMonth() + 1;
+            var curr_year = date.getFullYear();
+            var curr_hours = date.getHours();
+            var curr_minutes = date.getMinutes();
+            var curr_seconds = date.getSeconds();
+            return curr_year + "-" + (curr_month < 10 ? "0" + curr_month : curr_month) + "-" + (curr_date < 10 ? "0" + curr_date : curr_date) + " " + curr_hours + ":" + curr_minutes + ":" + curr_seconds;
+        } else{
+            return "";
+        }
+    }
+</script>
