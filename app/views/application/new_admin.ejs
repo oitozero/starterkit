@@ -1,0 +1,48 @@
+<% var flash = request.flash('info').pop(); if (flash) { %>
+    <div class="alert alert-info">
+        <a class="close" data-dismiss="alert">×</a>
+        <%- flash %>
+    </div>
+<% } %>
+
+<% flash = request.flash('error').pop(); if (flash) { %>
+    <div class="alert alert-error">
+        <a class="close" data-dismiss="alert">×</a>
+        <%- flash %>
+    </div>
+<% }; %>
+
+<div class="row">
+    
+    <% var form = formFor(null, {action: '/admin/save', method: 'POST', class: 'form-horizontal'}) %>
+    <%- form.begin() %>
+    <div class="control-group">
+        <div class="controls">
+            <p>First time. Select a password to access the administrator panel.</p>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <input type="text" id="admin_email" name="admin_email" placeholder="Email">
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <input type="password" id="admin_password" name="admin_password" placeholder="Password">
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <input type="password" id="admin_repeat_password" name="admin_repeat_password" placeholder="Repeat Password">
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <div>
+                <%- form.submit('Create', {class: 'btn btn-small'}) %>
+            </div>
+        </div>
+    </div>
+    <%- form.end() %>
+
+</div>

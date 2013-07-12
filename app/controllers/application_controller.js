@@ -63,25 +63,120 @@ action(function confirm() {
 
 });
 
-action(function admin() {
-    load_pageviews(function (pv_counter){
-        Subscriber.all(function (err, subscribers) {
-            switch (params.format) {
-                case "json":
-                    send({code: 200, data: subscribers});
-                    break;
-                default:
-                    render({
-                        page_title: config.name,
-                        header_title: config.name + " - admin",
-                        footer_title: config.name,
-                        subscribers: subscribers,
-                        pageviews: pv_counter
-                    });
-            }
-        });    
-    })
+action(function new_admin() {
+    render({
+        page_title: config.name,
+        header_title: config.name + " - new",
+        footer_title: config.name
+    });
+});
+action(function save_admin() {
     
+    var is_valid = false;
+
+    if(!isEmail(req.body.admin_email)){
+        flash('error', 'Insert a valid email');
+    }
+    else if(isEmpty(req.body.admin_password) || isEmpty(req.body.admin_repeat_password)){
+        flash('error', 'Insert a valid password');
+    }
+    else if(req.body.admin_password !== req.body.admin_repeat_password){
+        flash('error', 'Passwords dont match');
+    } else{
+        is_valid = true;
+    }
+
+    if(is_valid === true){
+        createAdmin(req.body.admin_email, req.body.admin_password, function (){
+            redirect("/admin");   
+        });
+    } else{
+        render('new_admin', {
+            page_title: config.name,
+            header_title: config.name + " - admin",
+            footer_title: config.name
+        });
+    }
+});
+
+function isEmail(email) { 
+    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
+} 
+function isEmpty(str) {
+    return (!str || 0 === str.length);
+}
+function createAdmin(email, password, cb){
+    admin = new compound.models.Admin;
+    admin.email = email;
+    admin.password = password;
+
+    compound.models.Admin.create(admin, function (err, admin) {
+        cb(admin);
+    });
+}
+
+action(function login() {
+    compound.models.Admin.count({}, function (err, count) {
+        
+        if(err || count === 0){
+            redirect("/admin/new");
+        } else{
+
+            render({
+                page_title: config.name,
+                header_title: config.name + " - login",
+                footer_title: config.name
+            });
+        }
+    });
+});
+action(function validate_login() {
+    compound.models.Admin.find(1, function (err, admin) {
+        if(req.body.admin_email === admin.email && req.body.admin_password === admin.password){
+            req.session.is_auth = true;
+            redirect("/admin");
+        } else{
+            flash('error', 'Invalid Login');
+            render("login",{
+                page_title: config.name,
+                header_title: config.name + " - login",
+                footer_title: config.name
+            });
+        }
+    });
+});
+
+action(function admin() {
+    compound.models.Admin.count({}, function (err, count) {
+        
+        if(err || count === 0){
+            redirect("/admin/new");
+        } else{
+            if(!req.session.is_auth){
+                redirect("/admin/login");   
+            } else{
+
+                load_pageviews(function (pv_counter){
+                    Subscriber.all(function (err, subscribers) {
+                        switch (params.format) {
+                            case "json":
+                                send({code: 200, data: subscribers});
+                                break;
+                            default:
+                                render({
+                                    page_title: config.name,
+                                    header_title: config.name + " - admin",
+                                    footer_title: config.name,
+                                    subscribers: subscribers,
+                                    pageviews: pv_counter
+                                });
+                        }
+                    });    
+                });
+            }
+        }
+    });
 });
 
 function send_email(to, cb){
@@ -118,7 +213,7 @@ function send_email(to, cb){
         
         var locals = {
           email: to,
-          confirm_link: "http://localhost:3000/confirm/" + confirmation_token,
+          confirm_link: config.social.link+"/confirm/" + confirmation_token,
           support_email: config.email.support
         };
 
@@ -163,14 +258,15 @@ function load_pageviews (cb) {
     var GA_END_DATE = format_date(new Date());
 
     var GA = require('googleanalytics'),
-    util = require('util'),
-    config = {
-        "user": GA_USER,
-        "password": GA_PASSWORD
-    }
+        util = require('util'),
+        config = {
+            "user": GA_USER,
+            "password": GA_PASSWORD
+        }
 
+    var pv_counter = 0;
+    
     try{
-        var pv_counter = 0;
         ga = new GA.GA(config);
         ga.login(function(err, token) {
             var options = {

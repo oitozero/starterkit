@@ -29,3 +29,9 @@ var Subscriber = describe('Subscriber', function () {
     set('restPath', pathTo.subscribers);
 });
 
+var Admin = describe('Admin', function () {
+    property('email', String);
+    property('password', String);
+    set('restPath', pathTo.Admins);
+});
+
